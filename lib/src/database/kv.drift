@@ -1,0 +1,59 @@
+-- Key-Value table
+CREATE TABLE IF NOT EXISTS kv (
+    -- req Key
+    k TEXT NOT NULL PRIMARY KEY,
+    -- req Value
+    v NOT NULL,
+    -- req Created date (in seconds)
+    created INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    -- req Updated date (in seconds)
+    updated INTEGER NOT NULL DEFAULT (strftime('%s', 'now')) CHECK(updated >= created),
+    -- opt Memo
+    memo TEXT
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS kv_created_idx ON kv (created);
+CREATE INDEX IF NOT EXISTS kv_updated_idx ON kv (updated);
+
+-- Get all keys
+getAllKV:
+    SELECT *
+    FROM kv;
+
+-- Get by key
+getByKey:
+    SELECT v
+    FROM kv
+    WHERE k = :key
+    LIMIT 1;
+
+-- Get by keys
+getByKeys:
+    SELECT k, v
+    FROM kv
+    WHERE k in ?;
+
+-- Delete by key
+deleteByKey:
+    DELETE FROM kv
+    WHERE k = :key;
+
+-- Delete by keys
+deleteByKeys:
+    DELETE FROM kv
+    WHERE k in ?;
+
+-- Upsert by key
+-- Also we can use INSERT OR REPLACE like this:
+-- INSERT OR REPLACE INTO kv (k, v, memo)
+-- VALUES (:key, :value, :memo);
+upsertKV:
+    INSERT INTO kv(k, v, memo)
+    VALUES(:key, :value, :memo)
+    ON CONFLICT(k) DO UPDATE SET
+        k=excluded.k,
+        v=excluded.v,
+        updated = strftime('%s', 'now'),
+        memo=excluded.memo
+    WHERE excluded.k > kv.k;

@@ -1,85 +1,116 @@
 import 'dart:async';
+import 'dart:io' as io;
 
+import 'package:html/dom.dart' as html;
+import 'package:html/parser.dart' as html show parse;
+import 'package:http/http.dart';
+import 'package:l/l.dart';
+import 'package:medium/src/article.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:puppeteer/puppeteer.dart';
 
-void main() => getImages();
+@sealed
+abstract class Scraper {
+  Scraper._();
 
-Future<List<List<int>>> getImages() async {
-  const headless = true;
-  const tags = <String>['flutter']; // 'dart'
-  final now = DateTime.now();
+  static Future<Set<Article>> getArticles(
+    DateTime date, {
+    final Browser? browser,
+  }) async {
+    final headless =
+        io.Platform.environment['HEADLESS']?.toLowerCase() != 'false';
 
-  // Download the Chromium binaries, launch it and connect to the "DevTools"
-  final browser = await puppeteer.launch(
-    headless: headless,
-    defaultViewport: const DeviceViewport(
-      width: 800,
-      height: 1280,
-      deviceScaleFactor: 1,
-      isMobile: true,
-      isLandscape: false,
-      hasTouch: true,
-    ),
-    timeout: const Duration(seconds: 30),
-    args: <String>['--no-sandbox', '--disable-setuid-sandbox'],
-  );
+    final tags = io.Platform.environment['TAGS']
+            ?.split(',')
+            .map((e) => e.trim().toLowerCase())
+            .toList(growable: false) ??
+        <String>['flutter', 'dart'];
 
-  final images = <List<int>>[];
-  try {
-    for (final tag in tags) {
-      final image = await scrapTag(
-        browser,
-        tag,
-        year: now.year,
-        month: now.month,
-        //day: now.day,
+    // Download the Chromium binaries, launch it and connect to the "DevTools"
+    final internalBrowser = browser ??
+        await puppeteer.launch(
+          headless: headless,
+          defaultViewport: const DeviceViewport(
+            width: 800,
+            height: 2560,
+            deviceScaleFactor: 1,
+            isMobile: false,
+            isLandscape: false,
+            hasTouch: false,
+          ),
+          timeout: const Duration(seconds: 30),
+          args: <String>['--no-sandbox', '--disable-setuid-sandbox'],
+        );
+
+    final articles = <Article>{};
+    try {
+      for (final tag in tags) {
+        final newArticles = await _scrapTag(
+          internalBrowser,
+          tag,
+          year: date.year,
+          month: date.month,
+          day: date.day,
+        );
+        articles.addAll(newArticles);
+      }
+
+      l.i('Found ${articles.length} articles');
+      return articles;
+    } on Object catch (error, stackTrace) {
+      l.e(
+        'Failed to scrap articles: $error',
+        StackTrace.fromString(
+          'Successful scrapped: ${articles.length}\n'
+          'Error: ${Error.safeToString(error)}\n'
+          '$stackTrace',
+        ),
       );
-      images.add(image);
+      rethrow;
+    } finally {
+      if (browser == null) {
+        Timer(
+          const Duration(milliseconds: 3),
+          () => internalBrowser.close().ignore(),
+        );
+      }
     }
-
-    return images;
-  } on Object {
-    rethrow;
-  } finally {
-    // Gracefully close the browser's process
-    await browser.close();
   }
-}
 
-Future<List<int>> scrapTag(
-  Browser browser,
-  String tag, {
-  int? year,
-  int? month,
-  int? day,
-}) async {
-  // Open a new tab
-  final page = await browser.newPage();
+  static Future<List<Article>> _scrapTag(
+    Browser browser,
+    String tag, {
+    int? year,
+    int? month,
+    int? day,
+  }) async {
+    // Open a new tab
+    final page = await browser.newPage();
 
-  final uri = Uri.parse(
-    p.normalize(
-      p.joinAll(<String>[
-        'https://medium.com',
-        'tag',
-        tag,
-        'archive',
-        ...<int?>[year, month, day]
-            .takeWhile((value) => value != null)
-            .map<String>((value) => value.toString().padLeft(2, '0')),
-      ]),
-    ),
-  );
+    final uri = Uri.parse(
+      p.normalize(
+        p.joinAll(<String>[
+          'https://medium.com',
+          'tag',
+          tag,
+          'archive',
+          ...<int?>[year, month, day]
+              .takeWhile((value) => value != null)
+              .map<String>((value) => value.toString().padLeft(2, '0')),
+        ]),
+      ),
+    );
 
-  // Go to a page and wait to be fully loaded
-  // e.g. https://medium.com/tag/dart/archive
-  await page.goto(
-    uri.toString(),
-    wait: Until.networkIdle,
-    timeout: const Duration(seconds: 30),
-  );
+    // Go to a page and wait to be fully loaded
+    // e.g. https://medium.com/tag/dart/archive
+    await page.goto(
+      uri.toString(),
+      wait: Until.networkIdle,
+      timeout: const Duration(seconds: 30),
+    );
 
-  /* Future<void> autoScroll() => page.evaluate<void>('''
+    /* Future<void> autoScroll() => page.evaluate<void>('''
       async () => {
         await new Promise((resolve) => {
           var totalHeight = 0;
@@ -98,49 +129,229 @@ Future<List<int>> scrapTag(
       }
       '''); */
 
-  Future<void> autoScroll() async {
-    var previousHeight = 0;
-    while (true) {
-      final newHeight = await page
-          .evaluate<int>('document.body.scrollHeight - window.innerHeight')
-          .timeout(const Duration(seconds: 30));
-      if (newHeight == previousHeight) break;
-      previousHeight = newHeight;
-      await page
-          .evaluate<void>('window.scrollTo(0, document.body.scrollHeight)')
-          .timeout(const Duration(seconds: 30));
-      await Future<void>.delayed(const Duration(seconds: 2));
+    Future<void> autoScroll() async {
+      var previousHeight = 0;
+      while (true) {
+        final newHeight = await page
+            .evaluate<int>('document.body.scrollHeight - window.innerHeight')
+            .timeout(const Duration(seconds: 30));
+        if (newHeight == previousHeight) break;
+        previousHeight = newHeight;
+        await page
+            .evaluate<void>('window.scrollTo(0, document.body.scrollHeight)')
+            .timeout(const Duration(seconds: 30));
+        await Future<void>.delayed(const Duration(milliseconds: 1000));
+      }
     }
+
+    await autoScroll();
+
+    const selector = '.js-postStream .postArticle-readMore a';
+    await page.waitForSelector(selector);
+    final hrefs = await page
+        .evaluate<List<Object?>>(
+          'Array.from(document.querySelectorAll("$selector"))'
+          '.map(x => x.href).filter(x => !!x)',
+        )
+        .then<List<Uri>>(
+          (l) => l
+              .whereType<String>()
+              .where((e) => e.isNotEmpty)
+              .map<String>((e) => e.trim())
+              .map<Uri?>(Uri.tryParse)
+              .whereType<Uri>()
+              .toList(),
+        );
+
+    final articles = <Article>[];
+    final client = Client();
+    for (final href in hrefs) {
+      // Open a new tab
+      //final page = await browser.newPage();
+      try {
+        /* await page.goto(
+          href,
+          wait: Until.networkIdle,
+          timeout: const Duration(seconds: 30),
+        );
+        final documentHtml =
+            await page.evaluate<String>('document.documentElement.outerHTML'); */
+        final documentHtml =
+            await client.get(href).then<String>((rsp) => rsp.body);
+        if (documentHtml.isEmpty) continue;
+        final document = html.parse(documentHtml);
+        final article = _articleFromHead(document.head, href);
+        articles.add(article);
+      } on Object catch (error, stackTrace) {
+        l.w(
+          'Can not extract article from url: $error',
+          StackTrace.fromString(
+            'Href: $href\n'
+            'Error: ${Error.safeToString(error)}\n'
+            '$stackTrace',
+          ),
+        );
+      } finally {
+        //page.close().ignore();
+      }
+    }
+    client.close();
+
+    /* final outerHTML =
+        await page.evaluate<String>('document.documentElement.outerHTML'); */
+
+    //final document = parse(content);
+
+    /*
+    // Ensure that the element is loaded
+    const selector = '.js-postStream';
+    await page.waitForSelector(selector);
+    final content = await page.$(selector);
+    await page.waitForSelector('.postArticle-content');
+    final articlesRaw = await content.$$('.postArticle-content');
+    */
+
+    /*
+    // For this example, we force the "screen" media-type because sometime
+    // CSS rules with "@media print" can change the look of the page.
+    await page.emulateMediaType(MediaType.screen);
+    await io.Directory('example').create(recursive: true);
+    await page.pdf(
+      format: PaperFormat.a4,
+      printBackground: true,
+      output: io.File('example/$tag.pdf').openWrite(),
+      pageRanges: '1',
+    );
+    await page
+        .screenshot(format: ScreenshotFormat.png, fullPage: true)
+        .then(io.File('example/$tag.png').writeAsBytes);
+    await io.File('example/$tag.png').writeAsBytes(screenshot);
+    */
+
+    //final screenshot = await content.screenshot(format: ScreenshotFormat.png);
+
+    page.close().ignore();
+
+    return articles;
   }
 
-  await autoScroll();
+  static Article _articleFromHead(html.Element? head, Uri url) {
+    if (head == null) throw ArgumentError.notNull('head');
+    final metas = head.getElementsByTagName('meta');
+    final properties = <String, String>{
+      for (final meta in metas)
+        meta.attributes['property'] ?? meta.attributes['name'] ?? 'unknown':
+            meta.attributes['content'] ?? meta.attributes['value'] ?? '',
+      '_id': <String>[url.host, ...url.pathSegments]
+          .map<String>((e) => e.trim().toLowerCase())
+          .where((e) => e.isNotEmpty)
+          .map<String>((e) => e.hashCode.toRadixString(36))
+          .join('-'),
+      '_url': url.toString(),
+      '_published': DateTime.now().toUtc().toIso8601String(),
+    };
 
-  // For this example, we force the "screen" media-type because sometime
-  // CSS rules with "@media print" can change the look of the page.
-  await page.emulateMediaType(MediaType.screen);
+    String select(List<String> tags) =>
+        tags.map((tag) => properties[tag]).whereType<String>().first;
 
-  // Ensure that the element is loaded
-  const selector = '.js-postStream';
-  await page.waitForSelector(selector);
-  final content = await page.$(selector);
-
-  /*
-  await io.Directory('example').create(recursive: true);
-  await page.pdf(
-    format: PaperFormat.a4,
-    printBackground: true,
-    output: io.File('example/$tag.pdf').openWrite(),
-    pageRanges: '1',
-  );
-  await page
-      .screenshot(format: ScreenshotFormat.png, fullPage: true)
-      .then(io.File('example/$tag.png').writeAsBytes);
-  await io.File('example/$tag.png').writeAsBytes(screenshot);
-  */
-
-  final screenshot = await content.screenshot(format: ScreenshotFormat.png);
-
-  page.close().ignore();
-
-  return screenshot;
+    return Article(
+      id: select(
+        <String>[
+          'article:id',
+          'id',
+          '_id',
+        ],
+      ),
+      uri: select(
+        <String>[
+          'al:web:url',
+          'og:url',
+          'url',
+          '_url',
+        ],
+      ),
+      title: select(
+        <String>[
+          'og:title',
+          'article:title',
+          'twitter:title',
+          'title',
+          '_title',
+        ],
+      ),
+      excerpt: select(
+        <String>[
+          'article:excerpt',
+          'og:description',
+          'description',
+          'twitter:description',
+          'title',
+          'twitter:title',
+          'og:title',
+          'article:title',
+          '_excerpt',
+          '_description',
+          '_title',
+        ],
+      ),
+      published: DateTime.parse(
+        select(
+          <String>[
+            'article:published_time',
+            'og:article:published_time',
+            'twitter:tile:info2:text',
+            'published',
+            '_published',
+          ],
+        ),
+      ),
+      author: select(
+        <String>[
+          'author',
+          'og:article:author',
+          'article:author',
+          'twitter:site',
+          'twitter:creator',
+          'twitter:tile:info1:text',
+          '_author',
+          '_creator',
+          '_publisher',
+        ],
+      ),
+      blog: select(
+        <String>[
+          'article:author',
+          'article:publisher',
+          'og:article:publisher',
+          'author',
+          'twitter:site',
+          'twitter:creator',
+          '_blog',
+          '_publisher',
+          '_creator',
+          '_author',
+        ],
+      ),
+      android: select(
+        <String>[
+          'al:android:url',
+          'twitter:app:url:android',
+          'al:web:url',
+          'og:url',
+          'url',
+          '_url',
+        ],
+      ),
+      ios: select(
+        <String>[
+          'al:ios:url',
+          'twitter:app:url:iphone',
+          'al:web:url',
+          'og:url',
+          'url',
+          '_url',
+        ],
+      ),
+    );
+  }
 }

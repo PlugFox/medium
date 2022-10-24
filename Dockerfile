@@ -25,7 +25,7 @@ COPY --from=build /app/bin/server /app/bin/
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Installs latest Chromium (100) package.
+# Installs latest Chromium (100) package and other dependencies.
 RUN mkdir -p /app/data; \
     apk add --no-cache \
     chromium \
@@ -35,7 +35,8 @@ RUN mkdir -p /app/data; \
     ca-certificates \
     ttf-freefont \
     nodejs \
-    yarn
+    yarn \
+    sqlite
 
 # Puppeteer v19.1.0 works with Chromium 100.
 RUN yarn add puppeteer@19.1.0

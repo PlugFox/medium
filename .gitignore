@@ -10,3 +10,6 @@ build/
 pubspec.lock
 
 coverage/
+
+.local-chromium/
+data/

@@ -1,0 +1,33 @@
+-- Medium articles
+CREATE TABLE IF NOT EXISTS article (
+    -- req Id
+    id TEXT NOT NULL PRIMARY KEY,
+    -- req URL
+    uri TEXT NOT NULL,
+    -- req Title
+    title TEXT NOT NULL,
+    -- req Description
+    excerpt TEXT NOT NULL,
+    -- req Published date (unixtime in seconds)
+    published INTEGER NOT NULL,
+    -- req Author name
+    author TEXT NOT NULL,
+    -- req Author URL
+    blog TEXT NOT NULL,
+    -- req Android URL
+    android TEXT NOT NULL,
+    -- req iOS URL
+    ios TEXT NOT NULL,
+    -- req Date the record was created in the database (unixtime in seconds)
+    created INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    -- req Date the record was updated in the database (unixtime in seconds)
+    updated INTEGER NOT NULL DEFAULT (strftime('%s', 'now')) CHECK(updated >= created),
+    -- req Memo
+    memo TEXT
+) STRICT;
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS article_published_idx ON article (published);
+CREATE INDEX IF NOT EXISTS article_uri_idx ON article (uri);
+CREATE INDEX IF NOT EXISTS article_updated_idx ON article (updated);
+CREATE INDEX IF NOT EXISTS article_created_idx ON article (created);
