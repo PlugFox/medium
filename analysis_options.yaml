@@ -38,8 +38,8 @@ analyzer:
 linter:
   rules:
     # Public packages
-    public_member_api_docs: true
-    lines_longer_than_80_chars: true
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
 
     # Flutter
     use_full_hex_values_for_flutter_colors: false
