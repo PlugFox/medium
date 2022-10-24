@@ -1,0 +1,21 @@
+name: medium
+description: Medium scraper
+version: 0.0.1
+homepage: https://github.com/PlugFox/medium
+repository: https://github.com/PlugFox/medium
+issue_tracker: https://github.com/PlugFox/medium/issues
+
+
+environment:
+  sdk: '>=2.18.2 <3.0.0'
+
+dependencies:
+  meta: ^1.7.0
+  args: ^2.0.0
+  shelf: ^1.1.0
+  shelf_router: ^1.0.0
+
+dev_dependencies:
+  http: ^0.13.0
+  test: ^1.15.0
+  coverage: any
