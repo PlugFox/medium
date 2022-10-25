@@ -147,7 +147,7 @@ Future<Response> _harvestHandler(Request request) async {
   l.i('Saved ${articles.length} articles');
 
   return Response.ok(
-    _encodeArticles(articles),
+    '{"data": {"message": "Saved ${articles.length} articles", "count": ${articles.length}}}',
     headers: <String, String>{
       'Content-Type': 'application/json;charset=utf-8',
     },
@@ -200,7 +200,6 @@ Future<Response> _getHandler(Request request) async {
             ios: e.ios,
           ),
         )
-        .toSet()
         .toList();
     l.i('Articles from db mapped to Article class');
     articles.sort((a, b) => a.published.compareTo(b.published));
@@ -266,7 +265,6 @@ Future<Response> _updatesHandler(Request request, String token) async {
             ios: e.ios,
           ),
         )
-        .toSet()
         .toList()
       ..sort((a, b) => a.published.compareTo(b.published));
     if (articles.isNotEmpty) {
