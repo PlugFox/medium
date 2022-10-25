@@ -173,6 +173,7 @@ Future<Response> _getHandler(Request request) async {
             1000;
     final to = from + 86400;
     final database = _$database;
+    l.i('Start selecting articles from db');
     final articlesDB = await (database.select(database.article)
           ..where((tbl) => tbl.published.isBetweenValues(from, to))
           ..orderBy([
@@ -183,6 +184,7 @@ Future<Response> _getHandler(Request request) async {
           ])
           ..limit(500))
         .get();
+    l.i('Selected ${articlesDB.length} articles');
     articles = articlesDB
         .map<Article>(
           (e) => Article(
