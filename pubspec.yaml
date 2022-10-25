@@ -20,6 +20,8 @@ dependencies:
   multiline: ^3.0.0
   html: ^0.15.1
   http: ^0.13.5
+  sqlite3_flutter_libs: any
+  sqlite3: any
 
 dev_dependencies:
   test: ^1.15.0
