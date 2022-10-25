@@ -1,8 +1,8 @@
-# docker build . -t medium
-# docker run --rm -it -p 8080:8080 medium
+# docker build . -t plugfox/medium:0.0.1
+# docker run -it --rm -w /app -v ${PWD}/data:/app/data -p 8080:8080 plugfox/medium:0.0.1
 
-# Use latest stable channel SDK.
-FROM dart:stable AS build
+# Use latest beta channel SDK.
+FROM dart:beta AS build
 
 # Resolve app dependencies.
 WORKDIR /app
@@ -16,7 +16,7 @@ RUN dart compile exe bin/server.dart -o bin/server
 
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
-FROM alpine as producation
+FROM alpine:3.16.2 as producation
 
 COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/
@@ -27,8 +27,7 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     DATA=/app/data
 
 # Installs latest Chromium (100) package and other dependencies.
-RUN mkdir -p /app/data; \
-    apk add --no-cache \
+RUN apk add --no-cache \
     chromium \
     nss \
     freetype \
@@ -37,14 +36,16 @@ RUN mkdir -p /app/data; \
     ttf-freefont \
     nodejs \
     yarn \
-    sqlite
+    sqlite-libs \
+    sqlite \
+    sqlite-dev
 
 # Puppeteer v19.1.0 works with Chromium 100.
 RUN yarn add puppeteer@19.1.0
 
 # Add user so we don't need --no-sandbox.
 RUN addgroup -S user && adduser -S -G user user \
-    && mkdir -p /home/user/Downloads /app \
+    && mkdir -p /home/user/Downloads /app/data \
     && chown -R user:user /home/user \
     && chown -R user:user /app
 

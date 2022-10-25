@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 
 @immutable
-class Article {
+class Article implements Comparable<Article> {
   const Article({
     required this.id,
     required this.uri,
@@ -91,4 +91,7 @@ class Article {
   @override
   bool operator ==(Object other) =>
       identical(this, other) || (other is Article && other.id == id);
+
+  @override
+  int compareTo(Article other) => published.compareTo(other.published);
 }

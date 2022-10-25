@@ -7,6 +7,295 @@ part of 'database.dart';
 // **************************************************************************
 
 // ignore_for_file: type=lint
+class LastUpdateData extends DataClass implements Insertable<LastUpdateData> {
+  final String token;
+  final int published;
+  final int created;
+  final int updated;
+  final String? memo;
+  const LastUpdateData(
+      {required this.token,
+      required this.published,
+      required this.created,
+      required this.updated,
+      this.memo});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['token'] = Variable<String>(token);
+    map['published'] = Variable<int>(published);
+    map['created'] = Variable<int>(created);
+    map['updated'] = Variable<int>(updated);
+    if (!nullToAbsent || memo != null) {
+      map['memo'] = Variable<String>(memo);
+    }
+    return map;
+  }
+
+  LastUpdateCompanion toCompanion(bool nullToAbsent) {
+    return LastUpdateCompanion(
+      token: Value(token),
+      published: Value(published),
+      created: Value(created),
+      updated: Value(updated),
+      memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+    );
+  }
+
+  factory LastUpdateData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LastUpdateData(
+      token: serializer.fromJson<String>(json['token']),
+      published: serializer.fromJson<int>(json['published']),
+      created: serializer.fromJson<int>(json['created']),
+      updated: serializer.fromJson<int>(json['updated']),
+      memo: serializer.fromJson<String?>(json['memo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'token': serializer.toJson<String>(token),
+      'published': serializer.toJson<int>(published),
+      'created': serializer.toJson<int>(created),
+      'updated': serializer.toJson<int>(updated),
+      'memo': serializer.toJson<String?>(memo),
+    };
+  }
+
+  LastUpdateData copyWith(
+          {String? token,
+          int? published,
+          int? created,
+          int? updated,
+          Value<String?> memo = const Value.absent()}) =>
+      LastUpdateData(
+        token: token ?? this.token,
+        published: published ?? this.published,
+        created: created ?? this.created,
+        updated: updated ?? this.updated,
+        memo: memo.present ? memo.value : this.memo,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('LastUpdateData(')
+          ..write('token: $token, ')
+          ..write('published: $published, ')
+          ..write('created: $created, ')
+          ..write('updated: $updated, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(token, published, created, updated, memo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LastUpdateData &&
+          other.token == this.token &&
+          other.published == this.published &&
+          other.created == this.created &&
+          other.updated == this.updated &&
+          other.memo == this.memo);
+}
+
+class LastUpdateCompanion extends UpdateCompanion<LastUpdateData> {
+  final Value<String> token;
+  final Value<int> published;
+  final Value<int> created;
+  final Value<int> updated;
+  final Value<String?> memo;
+  const LastUpdateCompanion({
+    this.token = const Value.absent(),
+    this.published = const Value.absent(),
+    this.created = const Value.absent(),
+    this.updated = const Value.absent(),
+    this.memo = const Value.absent(),
+  });
+  LastUpdateCompanion.insert({
+    required String token,
+    required int published,
+    this.created = const Value.absent(),
+    this.updated = const Value.absent(),
+    this.memo = const Value.absent(),
+  })  : token = Value(token),
+        published = Value(published);
+  static Insertable<LastUpdateData> custom({
+    Expression<String>? token,
+    Expression<int>? published,
+    Expression<int>? created,
+    Expression<int>? updated,
+    Expression<String>? memo,
+  }) {
+    return RawValuesInsertable({
+      if (token != null) 'token': token,
+      if (published != null) 'published': published,
+      if (created != null) 'created': created,
+      if (updated != null) 'updated': updated,
+      if (memo != null) 'memo': memo,
+    });
+  }
+
+  LastUpdateCompanion copyWith(
+      {Value<String>? token,
+      Value<int>? published,
+      Value<int>? created,
+      Value<int>? updated,
+      Value<String?>? memo}) {
+    return LastUpdateCompanion(
+      token: token ?? this.token,
+      published: published ?? this.published,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
+      memo: memo ?? this.memo,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (token.present) {
+      map['token'] = Variable<String>(token.value);
+    }
+    if (published.present) {
+      map['published'] = Variable<int>(published.value);
+    }
+    if (created.present) {
+      map['created'] = Variable<int>(created.value);
+    }
+    if (updated.present) {
+      map['updated'] = Variable<int>(updated.value);
+    }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LastUpdateCompanion(')
+          ..write('token: $token, ')
+          ..write('published: $published, ')
+          ..write('created: $created, ')
+          ..write('updated: $updated, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class LastUpdate extends Table with TableInfo<LastUpdate, LastUpdateData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  LastUpdate(this.attachedDatabase, [this._alias]);
+  final VerificationMeta _tokenMeta = const VerificationMeta('token');
+  late final GeneratedColumn<String> token = GeneratedColumn<String>(
+      'token', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY');
+  final VerificationMeta _publishedMeta = const VerificationMeta('published');
+  late final GeneratedColumn<int> published = GeneratedColumn<int>(
+      'published', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  final VerificationMeta _createdMeta = const VerificationMeta('created');
+  late final GeneratedColumn<int> created = GeneratedColumn<int>(
+      'created', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      $customConstraints: 'NOT NULL DEFAULT (strftime(\'%s\', \'now\'))',
+      defaultValue: const CustomExpression<int>('strftime(\'%s\', \'now\')'));
+  final VerificationMeta _updatedMeta = const VerificationMeta('updated');
+  late final GeneratedColumn<int> updated = GeneratedColumn<int>(
+      'updated', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      $customConstraints:
+          'NOT NULL DEFAULT (strftime(\'%s\', \'now\')) CHECK(updated >= created)',
+      defaultValue: const CustomExpression<int>('strftime(\'%s\', \'now\')'));
+  final VerificationMeta _memoMeta = const VerificationMeta('memo');
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+      'memo', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      $customConstraints: '');
+  @override
+  List<GeneratedColumn> get $columns =>
+      [token, published, created, updated, memo];
+  @override
+  String get aliasedName => _alias ?? 'last_update';
+  @override
+  String get actualTableName => 'last_update';
+  @override
+  VerificationContext validateIntegrity(Insertable<LastUpdateData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('token')) {
+      context.handle(
+          _tokenMeta, token.isAcceptableOrUnknown(data['token']!, _tokenMeta));
+    } else if (isInserting) {
+      context.missing(_tokenMeta);
+    }
+    if (data.containsKey('published')) {
+      context.handle(_publishedMeta,
+          published.isAcceptableOrUnknown(data['published']!, _publishedMeta));
+    } else if (isInserting) {
+      context.missing(_publishedMeta);
+    }
+    if (data.containsKey('created')) {
+      context.handle(_createdMeta,
+          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+    }
+    if (data.containsKey('updated')) {
+      context.handle(_updatedMeta,
+          updated.isAcceptableOrUnknown(data['updated']!, _updatedMeta));
+    }
+    if (data.containsKey('memo')) {
+      context.handle(
+          _memoMeta, memo.isAcceptableOrUnknown(data['memo']!, _memoMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {token};
+  @override
+  LastUpdateData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LastUpdateData(
+      token: attachedDatabase.options.types
+          .read(DriftSqlType.string, data['${effectivePrefix}token'])!,
+      published: attachedDatabase.options.types
+          .read(DriftSqlType.int, data['${effectivePrefix}published'])!,
+      created: attachedDatabase.options.types
+          .read(DriftSqlType.int, data['${effectivePrefix}created'])!,
+      updated: attachedDatabase.options.types
+          .read(DriftSqlType.int, data['${effectivePrefix}updated'])!,
+      memo: attachedDatabase.options.types
+          .read(DriftSqlType.string, data['${effectivePrefix}memo']),
+    );
+  }
+
+  @override
+  LastUpdate createAlias(String alias) {
+    return LastUpdate(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  bool get dontWriteConstraints => true;
+}
+
 class ArticleData extends DataClass implements Insertable<ArticleData> {
   final String id;
   final String uri;
@@ -847,6 +1136,13 @@ class Kv extends Table with TableInfo<Kv, KvData> {
 
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
+  late final LastUpdate lastUpdate = LastUpdate(this);
+  late final Index lastUpdatePublishedIdx = Index('last_update_published_idx',
+      'CREATE INDEX IF NOT EXISTS last_update_published_idx ON last_update (published)');
+  late final Index lastUpdateUpdatedIdx = Index('last_update_updated_idx',
+      'CREATE INDEX IF NOT EXISTS last_update_updated_idx ON last_update (updated)');
+  late final Index lastUpdateCreatedIdx = Index('last_update_created_idx',
+      'CREATE INDEX IF NOT EXISTS last_update_created_idx ON last_update (created)');
   late final Article article = Article(this);
   late final Index articlePublishedIdx = Index('article_published_idx',
       'CREATE INDEX IF NOT EXISTS article_published_idx ON article (published)');
@@ -931,6 +1227,10 @@ abstract class _$Database extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
+        lastUpdate,
+        lastUpdatePublishedIdx,
+        lastUpdateUpdatedIdx,
+        lastUpdateCreatedIdx,
         article,
         articlePublishedIdx,
         articleUriIdx,

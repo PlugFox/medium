@@ -13,12 +13,11 @@ import 'package:shelf_router/shelf_router.dart';
 db.Database get _$database => Zone.current[#database] as db.Database;
 
 final $router = Router()
-  ..get('/', _rootHandler)
+  ..all('/', _rootHandler)
   ..get('/health', _healthHandler)
   ..get('/harvest', _harvestHandler)
-  ..get('/get', _getHandler)
-  ..get('/updates/<token>', _updatesHandler)
-  ..all('/*', _rootHandler);
+  ..get('/get', _getHandler);
+//..get('/updates/<token>', _updatesHandler);
 
 Response _rootHandler(Request request) => Response.badRequest(
       body: jsonEncode(
@@ -48,14 +47,23 @@ Response _healthHandler(Request request) => Response.ok(
     );
 
 Future<Response> _harvestHandler(Request request) async {
-  var articles = <Article>{};
+  var articles = <Article>[];
   try {
-    final dateFromParameters = request.url.queryParameters['date'];
-    final date = (dateFromParameters != null
-            ? DateTime.tryParse(dateFromParameters)
-            : null) ??
-        DateTime.now().subtract(const Duration(days: 1));
-    articles = await Scraper.getArticles(date);
+    final dateFromParameters = request.url.queryParameters['date']
+        ?.split('-')
+        .map(int.tryParse)
+        .whereType<int>()
+        .toList();
+    final date = dateFromParameters != null && dateFromParameters.length == 3
+        ? DateTime.utc(
+            dateFromParameters[0],
+            dateFromParameters[1],
+            dateFromParameters[2],
+          )
+        : DateTime.now().toUtc().subtract(const Duration(days: 1));
+    articles = await Scraper.getArticles(date).then<List<Article>>(
+      (v) => v.toList()..sort((a, b) => a.published.compareTo(b.published)),
+    );
   } on Object catch (error, stackTrace) {
     Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
@@ -154,23 +162,33 @@ Future<Response> _harvestHandler(Request request) async {
 }
 
 Future<Response> _getHandler(Request request) async {
-  var articles = <Article>{};
+  var articles = <Article>[];
   try {
-    final dateFromParameters = request.url.queryParameters['date'];
-    final date = (dateFromParameters != null
-            ? DateTime.tryParse(dateFromParameters)
-            : null) ??
-        DateTime.now().subtract(const Duration(days: 1));
+    final dateFromParameters = request.url.queryParameters['date']
+        ?.split('-')
+        .map(int.tryParse)
+        .whereType<int>()
+        .toList();
+    final date = dateFromParameters != null && dateFromParameters.length == 3
+        ? DateTime.utc(
+            dateFromParameters[0],
+            dateFromParameters[1],
+            dateFromParameters[2],
+          )
+        : DateTime.now().toUtc().subtract(const Duration(days: 1));
     final from =
         DateTime(date.year, date.month, date.day).millisecondsSinceEpoch ~/
             1000;
     final to = from + 86400;
     final database = _$database;
     final articlesDB = await (database.select(database.article)
-          ..where(
-            (tbl) => tbl.published
-                .isBetween(db.Variable<int>(from), db.Variable<int>(to)),
-          )
+          ..where((tbl) => tbl.published.isBetweenValues(from, to))
+          ..orderBy([
+            (t) => db.OrderingTerm(
+                  expression: t.published,
+                  mode: db.OrderingMode.asc,
+                )
+          ])
           ..limit(500))
         .get();
     articles = articlesDB
@@ -187,7 +205,9 @@ Future<Response> _getHandler(Request request) async {
             ios: e.ios,
           ),
         )
-        .toSet();
+        .toSet()
+        .toList()
+      ..sort((a, b) => a.published.compareTo(b.published));
   } on Object catch (error, stackTrace) {
     Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
@@ -221,16 +241,84 @@ Future<Response> _getHandler(Request request) async {
   );
 }
 
+/*
 /// Get last updates by `token` and `published`
-FutureOr<Response> _updatesHandler(Request request, String token) =>
-    Response.badRequest(
+Future<Response> _updatesHandler(Request request, String token) async {
+  var articles = <Article>[];
+  try {
+    final database = _$database;
+    final published = await (database.select(database.lastUpdate)
+          ..where((tbl) => tbl.token.equals(token))
+          ..limit(1))
+        .getSingleOrNull()
+        .then<int?>((r) => r?.published);
+    final articlesDB = await (database.select(database.article)
+          ..where((tbl) => tbl.published.isBiggerThanValue(published ?? 0))
+          ..orderBy([
+            (t) => db.OrderingTerm(
+                  expression: t.published,
+                  mode: db.OrderingMode.asc,
+                )
+          ])
+          ..limit(500))
+        .get();
+    articles = articlesDB
+        .map<Article>(
+          (e) => Article(
+            id: e.id,
+            uri: e.uri,
+            title: e.title,
+            excerpt: e.excerpt,
+            published: DateTime.fromMillisecondsSinceEpoch(e.published * 1000),
+            author: e.author,
+            blog: e.blog,
+            android: e.android,
+            ios: e.ios,
+          ),
+        )
+        .toSet()
+        .toList()
+      ..sort((a, b) => a.published.compareTo(b.published));
+    if (articles.isNotEmpty) {
+      final updated = articles.last.published.millisecondsSinceEpoch ~/ 1000;
+      await database.into(database.lastUpdate).insert(
+            db.LastUpdateCompanion.insert(
+              token: token,
+              published: updated,
+            ),
+            mode: db.InsertMode.insertOrReplace,
+          );
+    }
+  } on Object catch (error, stackTrace) {
+    Timer(const Duration(seconds: 2), () => exit(2));
+    return Response.internalServerError(
       body: jsonEncode(
         <String, Object?>{
-          'error': <String, Object?>{'message': 'Unimplemented'},
-          'stack_trace': StackTrace.current.toString(),
+          'error': <String, Object?>{
+            'message': error.toString(),
+            'stack_trace': stackTrace.toString(),
+          }
         },
       ),
       headers: <String, String>{
         'Content-Type': 'application/json;charset=utf-8',
       },
     );
+  }
+
+  return Response.ok(
+    jsonEncode(
+      <String, Object?>{
+        'data': <String, Object?>{
+          'message': 'Received ${articles.length} articles',
+          'articles': articles.toList(growable: false),
+          'count': articles.length,
+        }
+      },
+    ),
+    headers: <String, String>{
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  );
+}
+ */

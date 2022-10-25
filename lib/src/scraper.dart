@@ -18,6 +18,10 @@ abstract class Scraper {
     DateTime date, {
     final Browser? browser,
   }) async {
+    if (date.isAfter(DateTime.now())) {
+      return Future<Set<Article>>.value(<Article>{});
+    }
+
     final headless =
         io.Platform.environment['HEADLESS']?.toLowerCase() != 'false';
 

@@ -12,6 +12,7 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 
 void main(List<String> args) {
+  l.i('Starting server');
   final parser = ArgParser()..addOption('data', abbr: 'd');
   final data = parser.parse(args)['data'] as String? ??
       io.Platform.environment['DATA'] ??

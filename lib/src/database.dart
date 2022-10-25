@@ -19,6 +19,7 @@ final _kDropTables = io.Platform.environment['DROP']?.toLowerCase() == 'true' ||
   include: <String>{
     'database/kv.drift',
     'database/article.drift',
+    'database/last_update.drift',
   },
   tables: <Type>[],
   daos: <Type>[],

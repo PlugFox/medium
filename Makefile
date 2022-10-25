@@ -28,7 +28,10 @@ codegen: get
 	@dart run build_runner build --delete-conflicting-outputs
 
 docker-build:
-	@docker build . -t medium
+	@docker build . -t plugfox/medium:0.0.1
 
 docker-run:
-	@docker run -it --rm -w /app $(PWD)/data:/app/data -p 8080:8080 medium
+	@docker run -it --rm -w /app -v $(PWD)/data:/app/data -p 8080:8080 plugfox/medium:0.0.1
+
+docker-deploy:
+	@docker push plugfox/medium:0.0.1

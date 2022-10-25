@@ -56,7 +56,8 @@ void main() => Future<void>(() async {
         await database.batch(
           (batch) => batch.insertAll(
             database.article,
-            articles
+            (articles.toList()
+                  ..sort((a, b) => a.published.compareTo(b.published)))
                 .map<db.ArticleCompanion>(
                   (e) => db.ArticleCompanion.insert(
                     id: e.id,

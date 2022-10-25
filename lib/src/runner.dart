@@ -58,6 +58,7 @@ Future<Config>? runner<Config extends Object>({
 Future<T?> _shutdownHandler<T extends Object?>(
   final Future<T> Function() onShutdown,
 ) {
+  l.v3('Add signal subscribtion');
   //StreamSubscription<String>? userKeySub;
   StreamSubscription<io.ProcessSignal>? sigIntSub;
   StreamSubscription<io.ProcessSignal>? sigTermSub;
@@ -110,6 +111,8 @@ Future<T?> _shutdownHandler<T extends Object?>(
           .watch()
           .listen(signalHandler, cancelOnError: false);
     }
+
+    l.v3('Signal subscribtion added');
   }
   return shutdownCompleter.future;
 }
