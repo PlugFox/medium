@@ -146,15 +146,7 @@ Future<Response> _harvestHandler(Request request) async {
   l.i('Saved ${articles.length} articles');
 
   return Response.ok(
-    jsonEncode(
-      <String, Object?>{
-        'data': <String, Object?>{
-          'message': 'Saved ${articles.length} articles',
-          'articles': articles.toList(growable: false),
-          'count': articles.length,
-        }
-      },
-    ),
+    _encodeArticles(articles),
     headers: <String, String>{
       'Content-Type': 'application/json;charset=utf-8',
     },
@@ -226,15 +218,7 @@ Future<Response> _getHandler(Request request) async {
   }
 
   return Response.ok(
-    jsonEncode(
-      <String, Object?>{
-        'data': <String, Object?>{
-          'message': 'Received ${articles.length} articles',
-          'articles': articles.toList(growable: false),
-          'count': articles.length,
-        }
-      },
-    ),
+    _encodeArticles(articles),
     headers: <String, String>{
       'Content-Type': 'application/json;charset=utf-8',
     },
@@ -307,18 +291,27 @@ Future<Response> _updatesHandler(Request request, String token) async {
   }
 
   return Response.ok(
-    jsonEncode(
-      <String, Object?>{
-        'data': <String, Object?>{
-          'message': 'Received ${articles.length} articles',
-          'articles': articles.toList(growable: false),
-          'count': articles.length,
-        }
-      },
-    ),
+    _encodeArticles(articles),
     headers: <String, String>{
       'Content-Type': 'application/json;charset=utf-8',
     },
   );
 }
  */
+
+String _encodeArticles(List<Article> articles) {
+  try {
+    l.i('Start encoding articles');
+    return jsonEncode(
+      <String, Object?>{
+        'data': <String, Object?>{
+          'message': 'Received ${articles.length} articles',
+          'articles': articles.map((e) => e.toJson()).toList(),
+          'count': articles.length,
+        }
+      },
+    );
+  } on Object {
+    return '{"error":{"message": "Can not encode articles"}}';
+  }
+}
