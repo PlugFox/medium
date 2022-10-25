@@ -44,13 +44,17 @@ RUN apk add --no-cache \
 RUN yarn add puppeteer@19.1.0
 
 # Add user so we don't need --no-sandbox.
-RUN addgroup -S user && adduser -S -G user user \
-    && mkdir -p /home/user/Downloads /app/data \
-    && chown -R user:user /home/user \
-    && chown -R user:user /app
+#RUN addgroup -S user && adduser -S -G user user \
+#    && mkdir -p /home/user/Downloads /app/data \
+#    && chown -R user:user /home/user \
+#    && chown -R user:user /app
 
 # Run everything after as non-privileged user.
-USER user
+#USER user
+
+RUN mkdir -p /app/data
+
+USER root
 
 # Start server.
 EXPOSE 8080
