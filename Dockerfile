@@ -50,6 +50,12 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 # # Run everything after as non-privileged user.
 # #USER user
 
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends bash curl git ca-certificates \
+    iputils-ping wget zip unzip apt-transport-https gnupg \
+    sqlite3 libsqlite3-dev lcov locales make ncdu \
+    && apt-get clean
+
 # Puppeteer v19.1.0 works with Chromium 100.
 #RUN yarn add puppeteer@19.1.0
 RUN npm install --save-dev 'puppeteer@~19.1.0'
