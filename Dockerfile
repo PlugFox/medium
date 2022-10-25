@@ -17,7 +17,7 @@ RUN dart compile exe bin/server.dart -o bin/server
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
 #FROM alpine:3.16.2 as producation
-FROM satantime/puppeteer-node:latest as producation
+FROM ubuntu:latest as producation
 
 COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/
@@ -54,16 +54,24 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 # # Run everything after as non-privileged user.
 # #USER user
 
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends bash curl git ca-certificates \
-    iputils-ping wget zip unzip apt-transport-https gnupg \
-    sqlite3 libsqlite3-dev lcov locales make ncdu yarn \
+RUN apt-get update -y \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update -y \
+    && apt-get install -y --no-install-recommends fonts-ipafont-gothic \
+    fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros fonts-kacst \
+    fonts-freefont-ttf libxss1 google-chrome-stable  \
+    bash curl git ca-certificates \
+    iputils-ping zip unzip apt-transport-https \
+    sqlite3 libsqlite3-dev lcov locales make ncdu \
     && apt-get clean
 
 RUN mkdir -p /app/data
 
 # Puppeteer v19.1.0 works with Chromium 100.
-RUN yarn add 'puppeteer@19.1.0'
+#RUN yarn add 'puppeteer@19.1.0'
+RUN npm init -y && npm i puppeteer
 
 # Start server.
 EXPOSE 8080
