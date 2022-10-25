@@ -65,6 +65,7 @@ Future<Response> _harvestHandler(Request request) async {
       (v) => v.toList()..sort((a, b) => a.published.compareTo(b.published)),
     );
   } on Object catch (error, stackTrace) {
+    l.e(error, stackTrace);
     Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
@@ -128,6 +129,7 @@ Future<Response> _harvestHandler(Request request) async {
       ),
     );
   } on Object catch (error, stackTrace) {
+    l.e(error, stackTrace);
     Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
@@ -203,6 +205,7 @@ Future<Response> _getHandler(Request request) async {
         .toList()
       ..sort((a, b) => a.published.compareTo(b.published));
   } on Object catch (error, stackTrace) {
+    l.e(error, stackTrace);
     Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
@@ -276,6 +279,7 @@ Future<Response> _updatesHandler(Request request, String token) async {
           );
     }
   } on Object catch (error, stackTrace) {
+    l.e(error, stackTrace);
     Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
