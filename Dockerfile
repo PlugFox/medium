@@ -17,7 +17,7 @@ RUN dart compile exe bin/server.dart -o bin/server
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
 #FROM alpine:3.16.2 as producation
-FROM debian:latest as producation
+FROM debian:buster-slim as producation
 
 # Alpine:
 # # Installs latest Chromium (100) package and other dependencies.
@@ -53,14 +53,19 @@ FROM debian:latest as producation
 #    && apt-get clean \
 #    && rm -rf /var/lib/apt/lists/*
 
+# Install deps + add Chrome Stable + purge all the things
+# https://hub.docker.com/r/justinribeiro/chrome-headless/dockerfile/
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends \
-    libssl-dev sqlite3 libsqlite3-dev locales wget gnupg
+    libssl-dev sqlite3 libsqlite3-dev locales wget apt-transport-https \
+    ca-certificates curl gnupg
 
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+    && sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
 
-RUN apt-get update -y && apt-get -y install google-chrome-stable --no-install-recommends \
+RUN apt-get update -y && apt-get --fix-broken install \
+    && apt-get -y install google-chrome-stable --no-install-recommends \
+    && apt-get purge --auto-remove -y gnupg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
