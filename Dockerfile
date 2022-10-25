@@ -16,7 +16,8 @@ RUN dart compile exe bin/server.dart -o bin/server
 
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
-FROM alpine:3.16.2 as producation
+#FROM alpine:3.16.2 as producation
+FROM satantime/puppeteer-node:latest as producation
 
 COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/
@@ -26,35 +27,37 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     DATA=/app/data
 
-# Installs latest Chromium (100) package and other dependencies.
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    nodejs \
-    yarn \
-    sqlite-libs \
-    sqlite \
-    sqlite-dev
+# Alpine:
+# # Installs latest Chromium (100) package and other dependencies.
+# RUN apk add --no-cache \
+#     chromium \
+#     nss \
+#     freetype \
+#     harfbuzz \
+#     ca-certificates \
+#     ttf-freefont \
+#     nodejs \
+#     yarn \
+#     sqlite-libs \
+#     sqlite \
+#     sqlite-dev
+#
+# # Add user so we don't need --no-sandbox.
+# #RUN addgroup -S user && adduser -S -G user user \
+# #    && mkdir -p /home/user/Downloads /app/data \
+# #    && chown -R user:user /home/user \
+# #    && chown -R user:user /app
+# # Run everything after as non-privileged user.
+# #USER user
 
 # Puppeteer v19.1.0 works with Chromium 100.
-RUN yarn add puppeteer@19.1.0
-
-# Add user so we don't need --no-sandbox.
-#RUN addgroup -S user && adduser -S -G user user \
-#    && mkdir -p /home/user/Downloads /app/data \
-#    && chown -R user:user /home/user \
-#    && chown -R user:user /app
-
-# Run everything after as non-privileged user.
-#USER user
+#RUN yarn add puppeteer@19.1.0
+RUN npm install --save-dev 'puppeteer@~19.1.0'
 
 RUN mkdir -p /app/data
 
 USER root
+WORKDIR /app
 
 # Start server.
 EXPOSE 8080
