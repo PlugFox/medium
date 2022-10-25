@@ -23,7 +23,7 @@ void main(List<String> args) {
 
   final $serverDatabase = db.Database(
     path: io.File(p.join(data, 'db.sqlite')),
-    logStatements: false,
+    logStatements: true,
   );
 
   runZoned<void>(
