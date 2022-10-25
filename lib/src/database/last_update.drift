@@ -1,0 +1,19 @@
+-- Clients last received update
+CREATE TABLE IF NOT EXISTS last_update (
+    -- req Client token
+    --token INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    token TEXT NOT NULL PRIMARY KEY,
+    -- req Last received published date (unixtime in seconds)
+    published INTEGER NOT NULL,
+    -- req Date the record was created in the database (unixtime in seconds)
+    created INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    -- req Date the record was updated in the database (unixtime in seconds)
+    updated INTEGER NOT NULL DEFAULT (strftime('%s', 'now')) CHECK(updated >= created),
+    -- req Memo
+    memo TEXT
+) STRICT;
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS last_update_published_idx ON last_update (published);
+CREATE INDEX IF NOT EXISTS last_update_updated_idx ON last_update (updated);
+CREATE INDEX IF NOT EXISTS last_update_created_idx ON last_update (created);

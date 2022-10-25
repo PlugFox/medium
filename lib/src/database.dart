@@ -6,7 +6,6 @@ import 'package:drift/native.dart' as ffi;
 import 'package:medium/src/database/queries.dart';
 import 'package:meta/meta.dart';
 import 'package:multiline/multiline.dart';
-import 'package:path/path.dart' as p;
 
 export 'package:drift/drift.dart';
 
@@ -37,30 +36,22 @@ class Database extends _$Database
   /// add custom user-defined sql functions or to provide encryption keys in
   /// SQLCipher implementations.
   Database({
-    io.File? path,
+    required io.File path,
     ffi.DatabaseSetup? setup,
     bool logStatements = false,
   }) : super(
           LazyDatabase(() async {
-            io.File file;
-            if (path == null) {
-              /* 'db.sqlite';
-              final dbFolder = await pp.getApplicationDocumentsDirectory(); */
-              file = io.File(p.normalize('/app/data/db.sqlite'));
-            } else {
-              file = path;
-            }
             try {
-              if (_kDropTables && file.existsSync()) {
-                file.deleteSync();
+              if (_kDropTables && path.existsSync()) {
+                path.deleteSync();
               }
             } on Object {
-              log("Can't delete database file: $file");
+              log("Can't delete database file: $path");
               rethrow;
             }
             return Future<QueryExecutor>.value(
               ffi.NativeDatabase(
-                file,
+                path,
                 logStatements: logStatements,
                 setup: setup,
               ),

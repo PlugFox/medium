@@ -1,13 +1,15 @@
 {
     "version": "0.2.0",
     "configurations": [
-        /*
         {
             "name": "server",
             "request": "launch",
             "type": "dart",
-            "program": "example/lib/main.dart",
+            "program": "bin/server.dart",
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "DATA": "data"
+            }
         }
-        */
     ]
 }

@@ -1,14 +1,31 @@
 import 'dart:async';
 import 'dart:io' as io;
 
+import 'package:args/args.dart';
 import 'package:l/l.dart';
+import 'package:medium/src/database.dart' as db;
 import 'package:medium/src/router.dart';
 import 'package:medium/src/runner.dart';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 
-void main(List<String> args) => l.capture(
+void main(List<String> args) {
+  final parser = ArgParser()..addOption('data', abbr: 'd');
+  final data = parser.parse(args)['data'] as String? ??
+      io.Platform.environment['DATA'] ??
+      p.join(io.Directory.current.path, 'data');
+
+  io.Directory(data).createSync(recursive: true);
+
+  final $serverDatabase = db.Database(
+    path: io.File(p.join(data, 'db.sqlite')),
+    logStatements: false,
+  );
+
+  runZoned<void>(
+    () => l.capture(
       () => runner<ServerConfig>(
         initialization: () async {
           final stopwatch = Stopwatch()..start();
@@ -50,6 +67,7 @@ void main(List<String> args) => l.capture(
           );
         },
         onShutdown: (config) async {
+          $serverDatabase.close().ignore();
           try {
             await Future.wait<void>(config.servers.map((s) => s.close()))
                 .timeout(const Duration(seconds: 5));
@@ -64,7 +82,12 @@ void main(List<String> args) => l.capture(
         handlePrint: true,
         outputInRelease: true,
       ),
-    );
+    ),
+    zoneValues: <Symbol, Object?>{
+      #database: $serverDatabase,
+    },
+  );
+}
 
 @immutable
 class ServerConfig {

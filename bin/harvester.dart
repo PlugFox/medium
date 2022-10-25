@@ -51,6 +51,8 @@ void main() => Future<void>(() async {
             .then<Set<Article>>((articles) => articles.toSet());
 
         // Save articles
+        final updated =
+            db.Value<int>(DateTime.now().millisecondsSinceEpoch ~/ 1000);
         await database.batch(
           (batch) => batch.insertAll(
             database.article,
@@ -66,10 +68,12 @@ void main() => Future<void>(() async {
                     blog: e.blog,
                     android: e.android,
                     ios: e.ios,
-                    updated: db.Value<int>(now.millisecondsSinceEpoch ~/ 1000),
+                    updated: updated,
                   ),
                 )
                 .toList(growable: false),
+            mode: db.InsertMode.insertOrReplace,
+            //onConflict: db.DoUpdate(),
           ),
         );
         l.i('Saved ${articles.length} articles');

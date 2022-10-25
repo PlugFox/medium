@@ -47,8 +47,8 @@ abstract class Scraper {
     try {
       for (final tag in tags) {
         final newArticles = await _scrapTag(
-          internalBrowser,
-          tag,
+          browser: internalBrowser,
+          tag: tag,
           year: date.year,
           month: date.month,
           day: date.day,
@@ -78,12 +78,12 @@ abstract class Scraper {
     }
   }
 
-  static Future<List<Article>> _scrapTag(
-    Browser browser,
-    String tag, {
-    int? year,
-    int? month,
-    int? day,
+  static Future<List<Article>> _scrapTag({
+    required Browser browser,
+    required String tag,
+    required int year,
+    required int month,
+    required int day,
   }) async {
     // Open a new tab
     final page = await browser.newPage();
@@ -165,6 +165,7 @@ abstract class Scraper {
 
     final articles = <Article>[];
     final client = Client();
+    final published = DateTime(year, month, day).toUtc().toIso8601String();
     for (final href in hrefs) {
       // Open a new tab
       //final page = await browser.newPage();
@@ -180,7 +181,7 @@ abstract class Scraper {
             await client.get(href).then<String>((rsp) => rsp.body);
         if (documentHtml.isEmpty) continue;
         final document = html.parse(documentHtml);
-        final article = _articleFromHead(document.head, href);
+        final article = _articleFromHead(document.head, href, published);
         articles.add(article);
       } on Object catch (error, stackTrace) {
         l.w(
@@ -235,7 +236,11 @@ abstract class Scraper {
     return articles;
   }
 
-  static Article _articleFromHead(html.Element? head, Uri url) {
+  static Article _articleFromHead(
+    html.Element? head,
+    Uri url,
+    String published,
+  ) {
     if (head == null) throw ArgumentError.notNull('head');
     final metas = head.getElementsByTagName('meta');
     final properties = <String, String>{
@@ -248,11 +253,18 @@ abstract class Scraper {
           .map<String>((e) => e.hashCode.toRadixString(36))
           .join('-'),
       '_url': url.toString(),
-      '_published': DateTime.now().toUtc().toIso8601String(),
+      '_published': published,
     };
 
     String select(List<String> tags) =>
         tags.map((tag) => properties[tag]).whereType<String>().first;
+
+    DateTime selectDate(List<String> tags) => tags
+        .map((tag) => properties[tag])
+        .whereType<String>()
+        .map<DateTime?>(DateTime.tryParse)
+        .whereType<DateTime>()
+        .first;
 
     return Article(
       id: select(
@@ -294,16 +306,14 @@ abstract class Scraper {
           '_title',
         ],
       ),
-      published: DateTime.parse(
-        select(
-          <String>[
-            'article:published_time',
-            'og:article:published_time',
-            'twitter:tile:info2:text',
-            'published',
-            '_published',
-          ],
-        ),
+      published: selectDate(
+        <String>[
+          'article:published_time',
+          'og:article:published_time',
+          'twitter:tile:info2:text',
+          'published',
+          '_published',
+        ],
       ),
       author: select(
         <String>[
