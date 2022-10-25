@@ -23,9 +23,6 @@ FROM ubuntu:latest as producation
 COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/
 
-USER root
-WORKDIR /app
-
 # Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_SKIP_DOWNLOAD=true \
@@ -69,7 +66,7 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 # chromium-browser
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends \
-    sqlite3 libsqlite3-dev locales \
+    libssl-dev sqlite3 libsqlite3-dev locales \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -79,6 +76,9 @@ RUN mkdir -p /app/data
 #RUN yarn add 'puppeteer@19.1.0'
 #sudo npm install -g puppeteer --unsafe-perm=true -allow-root && sudo apt install chromium-browser -y
 #RUN npm init -y && npm i puppeteer
+
+USER root
+WORKDIR /app
 
 # Start server.
 EXPOSE 8080
