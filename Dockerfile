@@ -22,8 +22,12 @@ FROM satantime/puppeteer-node:latest as producation
 COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/
 
+USER root
+WORKDIR /app
+
 # Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     DATA=/app/data
 
@@ -53,17 +57,13 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends bash curl git ca-certificates \
     iputils-ping wget zip unzip apt-transport-https gnupg \
-    sqlite3 libsqlite3-dev lcov locales make ncdu \
+    sqlite3 libsqlite3-dev lcov locales make ncdu yarn \
     && apt-get clean
-
-# Puppeteer v19.1.0 works with Chromium 100.
-#RUN yarn add puppeteer@19.1.0
-RUN npm install --save-dev 'puppeteer@~19.1.0'
 
 RUN mkdir -p /app/data
 
-USER root
-WORKDIR /app
+# Puppeteer v19.1.0 works with Chromium 100.
+RUN yarn add 'puppeteer@19.1.0'
 
 # Start server.
 EXPOSE 8080
