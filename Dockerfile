@@ -18,7 +18,7 @@ RUN dart compile exe bin/server.dart -o bin/server
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
 #FROM alpine:3.16.2 as producation
-FROM ubuntu:latest as producation
+FROM debian:latest as producation
 
 # Alpine:
 # # Installs latest Chromium (100) package and other dependencies.
@@ -83,3 +83,6 @@ WORKDIR /app
 # Start server.
 EXPOSE 8080
 CMD ["/app/bin/server"]
+
+#[E] Invalid argument(s): Failed to load dynamic library 'libsqlite3.so': /lib/x86_64-linux-gnu/libc.so.6:
+# version `GLIBC_2.33' not found (required by /usr/lib/x86_64-linux-gnu/libsqlite3.so)
