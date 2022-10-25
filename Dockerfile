@@ -1,6 +1,5 @@
 # docker build . -t plugfox/medium:0.0.1
 # docker run -it --rm -w /app -v ${PWD}/data:/app/data -p 8080:8080 plugfox/medium:0.0.1
-# docker run -it --rm ubuntu
 
 # Use latest beta channel SDK.
 FROM dart:beta AS build
