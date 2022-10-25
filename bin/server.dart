@@ -68,7 +68,11 @@ void main(List<String> args) {
             ],
           );
         },
+        onError: (error, stackTrace) async {
+          l.e('Top level error: $error', stackTrace);
+        },
         onShutdown: (config) async {
+          l.i('Shutting down server');
           $serverDatabase.close().ignore();
           try {
             await Future.wait<void>(config.servers.map((s) => s.close()))

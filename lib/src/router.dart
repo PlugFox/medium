@@ -1,7 +1,6 @@
 // Configure routes.
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:l/l.dart';
 import 'package:medium/src/article.dart';
@@ -66,7 +65,7 @@ Future<Response> _harvestHandler(Request request) async {
     );
   } on Object catch (error, stackTrace) {
     l.e(error, stackTrace);
-    Timer(const Duration(seconds: 2), () => exit(2));
+    //Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
         <String, Object?>{
@@ -130,7 +129,7 @@ Future<Response> _harvestHandler(Request request) async {
     );
   } on Object catch (error, stackTrace) {
     l.e(error, stackTrace);
-    Timer(const Duration(seconds: 2), () => exit(2));
+    //Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
         <String, Object?>{
@@ -202,11 +201,13 @@ Future<Response> _getHandler(Request request) async {
           ),
         )
         .toSet()
-        .toList()
-      ..sort((a, b) => a.published.compareTo(b.published));
+        .toList();
+    l.i('Articles from db mapped to Article class');
+    articles.sort((a, b) => a.published.compareTo(b.published));
+    l.i('Articles sorted');
   } on Object catch (error, stackTrace) {
     l.e(error, stackTrace);
-    Timer(const Duration(seconds: 2), () => exit(2));
+    //Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
         <String, Object?>{
@@ -280,7 +281,7 @@ Future<Response> _updatesHandler(Request request, String token) async {
     }
   } on Object catch (error, stackTrace) {
     l.e(error, stackTrace);
-    Timer(const Duration(seconds: 2), () => exit(2));
+    //Timer(const Duration(seconds: 2), () => exit(2));
     return Response.internalServerError(
       body: jsonEncode(
         <String, Object?>{
@@ -318,6 +319,7 @@ String _encodeArticles(List<Article> articles) {
       },
     );
   } on Object {
+    l.i('Encoding articles failed');
     return '{"error":{"message": "Can not encode articles"}}';
   }
 }
