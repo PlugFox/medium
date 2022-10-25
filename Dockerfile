@@ -20,15 +20,6 @@ RUN dart compile exe bin/server.dart -o bin/server
 #FROM alpine:3.16.2 as producation
 FROM ubuntu:21.10 as producation
 
-COPY --from=build /runtime/ /
-COPY --from=build /app/bin/server /app/bin/
-
-# Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    DATA=/app/data
-
 # Alpine:
 # # Installs latest Chromium (100) package and other dependencies.
 # RUN apk add --no-cache \
@@ -71,6 +62,15 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app/data
+
+COPY --from=build /runtime/ /
+COPY --from=build /app/bin/server /app/bin/
+
+# Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    DATA=/app/data
 
 # Puppeteer v19.1.0 works with Chromium 100.
 #RUN yarn add 'puppeteer@19.1.0'
