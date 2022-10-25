@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS article (
     updated INTEGER NOT NULL DEFAULT (strftime('%s', 'now')) CHECK(updated >= created),
     -- req Memo
     memo TEXT
-) STRICT;
+); -- STRICT;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS article_published_idx ON article (published);

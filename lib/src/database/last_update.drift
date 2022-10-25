@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS last_update (
     updated INTEGER NOT NULL DEFAULT (strftime('%s', 'now')) CHECK(updated >= created),
     -- req Memo
     memo TEXT
-) STRICT;
+); -- STRICT;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS last_update_published_idx ON last_update (published);

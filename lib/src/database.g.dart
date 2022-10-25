@@ -291,8 +291,6 @@ class LastUpdate extends Table with TableInfo<LastUpdate, LastUpdateData> {
   }
 
   @override
-  bool get isStrict => true;
-  @override
   bool get dontWriteConstraints => true;
 }
 
@@ -843,8 +841,6 @@ class Article extends Table with TableInfo<Article, ArticleData> {
     return Article(attachedDatabase, alias);
   }
 
-  @override
-  bool get isStrict => true;
   @override
   bool get dontWriteConstraints => true;
 }
