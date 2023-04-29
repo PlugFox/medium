@@ -35,7 +35,7 @@ jobs:
           file: ./arm.dockerfile
           platforms: linux/arm64
           push: true
-          tags: plugfox/medium:latest,plugfox/medium:${{ github.event.inputs.version }}
+          tags: plugfox/medium:latest,plugfox/medium:${{ github.event.inputs.version }},plugfox/medium:${{ github.event.inputs.version }}-arm64
 
       - name: Build and push x86 image
         uses: docker/build-push-action@v4
@@ -44,4 +44,4 @@ jobs:
           file: ./x86.dockerfile
           platforms: linux/amd64
           push: true
-          tags: plugfox/medium:latest,plugfox/medium:${{ github.event.inputs.version }}
+          tags: plugfox/medium:latest,plugfox/medium:${{ github.event.inputs.version }},plugfox/medium:${{ github.event.inputs.version }}-amd64
