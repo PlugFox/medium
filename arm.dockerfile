@@ -13,7 +13,8 @@ RUN dart pub get
 # Copy app source code (except anything in .dockerignore) and AOT compile app.
 COPY . .
 
-RUN dart compile exe bin/server.dart -o bin/server && \
+RUN dart pub run build_runner build --delete-conflicting-outputs && \
+    dart compile exe bin/server.dart -o bin/server && \
     dart compile exe bin/init.dart -o bin/init
 
 #FROM debian:buster-slim as producation
