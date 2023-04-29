@@ -2,7 +2,7 @@
 # docker run -it --rm -w /app -v ${PWD}/data:/app/data -p 8080:8080 plugfox/medium:0.0.2
 
 # Use latest beta channel SDK.
-FROM dart:beta AS build
+FROM --platform=linux/amd64 dart:beta AS build
 
 # Resolve app dependencies.
 WORKDIR /app
@@ -15,7 +15,8 @@ COPY . .
 RUN dart compile exe bin/server.dart -o bin/server && \
     dart compile exe bin/init.dart -o bin/init
 
-FROM debian:buster-slim as producation
+#FROM debian:buster-slim as producation
+FROM --platform=linux/amd64 debian:buster-slim as producation
 
 # Install deps + add Chrome Stable + purge all the things
 RUN apt-get update -y && \
@@ -25,6 +26,9 @@ RUN apt-get update -y && \
 # Установите Google Chrome
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+# && sh -c "echo 'deb http://dl.google.com/linux/chrome/deb/ stable main' >>   /etc/apt/sources.list"
+# && sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+# && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
 
 RUN apt-get update -y && apt-get --fix-broken install \
     && apt-get -y install google-chrome-stable --no-install-recommends
