@@ -45,6 +45,7 @@ Response _healthHandler(Request request) => Response.ok(
       },
     );
 
+/// e.g. http://127.0.0.1:8080/harvest?date=2023-04-29
 Future<Response> _harvestHandler(Request request) async {
   var articles = <Article>[];
   try {
