@@ -3,7 +3,7 @@
 # docker run -it --rm -w /app -v ${PWD}/data:/app/data plugfox/medium:0.0.2 /bin/bash
 
 # Use latest beta channel SDK.
-FROM --platform=linux/amd64 dart:beta AS build
+FROM dart:beta AS build
 
 # Resolve app dependencies.
 WORKDIR /app
@@ -42,6 +42,10 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 RUN mkdir -p /app/data
 
+# Add dart runtime
+COPY --from=build /runtime/ /
+
+# Init puppeteer
 #COPY --from=build /app/bin/init /app/bin/
 #RUN /app/bin/init
 #RUN rm /app/bin/init
