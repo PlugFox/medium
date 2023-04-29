@@ -12,73 +12,41 @@ RUN dart pub get
 # Copy app source code (except anything in .dockerignore) and AOT compile app.
 COPY . .
 
-RUN dart compile exe bin/server.dart -o bin/server
+RUN dart compile exe bin/server.dart -o bin/server && \
+    dart compile exe bin/init.dart -o bin/init
 
-# Build minimal serving image from AOT-compiled `/server`
-# and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
-#FROM alpine:3.16.2 as producation
-FROM debian:buster-slim as producation
-
-# Alpine:
-# # Installs latest Chromium (100) package and other dependencies.
-# RUN apk add --no-cache \
-#     chromium \
-#     nss \
-#     freetype \
-#     harfbuzz \
-#     ca-certificates \
-#     ttf-freefont \
-#     nodejs \
-#     yarn \
-#     sqlite-libs \
-#     sqlite \
-#     sqlite-dev
-#
-# # Add user so we don't need --no-sandbox.
-# #RUN addgroup -S user && adduser -S -G user user \
-# #    && mkdir -p /home/user/Downloads /app/data \
-# #    && chown -R user:user /home/user \
-# #    && chown -R user:user /app
-# # Run everything after as non-privileged user.
-# #USER user
-
-# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
-# installs, work.
-#RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-#    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-#    && apt-get update -y \
-#    && apt-get install -y google-chrome-unstable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst \
-#    sqlite3 libsqlite3-dev locales --no-install-recommends \
-#    && apt-get clean \
-#    && rm -rf /var/lib/apt/lists/*
+# https://hub.docker.com/r/satantime/puppeteer-node
+# docker run -it --rm --user root satantime/puppeteer-node:buster-slim /bin/bash
+#FROM satantime/puppeteer-node:buster-slim as producation
+FROM ubuntu:lunar as producation
 
 # Install deps + add Chrome Stable + purge all the things
-# https://hub.docker.com/r/justinribeiro/chrome-headless/dockerfile/
-RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends \
-    libssl-dev sqlite3 libsqlite3-dev locales wget apt-transport-https \
-    ca-certificates curl gnupg
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends gnupg apt-transport-https \
+    sqlite3 libsqlite3-dev locales wget ca-certificates curl lsb-release unzip
 
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
-
-RUN apt-get update -y && apt-get --fix-broken install \
-    && apt-get -y install google-chrome-stable --no-install-recommends \
-    && apt-get purge --auto-remove -y gnupg \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Установите Google Chrome
+#RUN apt-get update -y && \
+#    apt-get install -y --no-install-recommends chromium-browser
 
 RUN mkdir -p /app/data
+COPY --from=build /app/bin/init /app/bin/
+RUN /app/bin/init
+RUN rm /app/bin/init
 
-COPY --from=build /runtime/ /
+# Очистите кэш пакетов
+RUN apt-get purge --auto-remove -y gnupg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+#COPY --from=build /runtime/ /
 COPY --from=build /app/bin/server /app/bin/
 
 # Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
-    DATA=/app/data
+#ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+#    PUPPETEER_SKIP_DOWNLOAD=true \
+#    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+#    DATA=/app/data
 
 # Puppeteer v19.1.0 works with Chromium 100.
 #RUN yarn add 'puppeteer@19.1.0'
@@ -91,6 +59,3 @@ WORKDIR /app
 # Start server.
 EXPOSE 8080
 CMD ["/app/bin/server"]
-
-#[E] Invalid argument(s): Failed to load dynamic library 'libsqlite3.so': /lib/x86_64-linux-gnu/libc.so.6:
-# version `GLIBC_2.33' not found (required by /usr/lib/x86_64-linux-gnu/libsqlite3.so)
