@@ -22,7 +22,7 @@ void main() => Future<void>(() async {
 
       // Init browser
       final browser = await puppeteer.launch(
-        headless: false,
+        headless: true,
         defaultViewport: const DeviceViewport(
           width: 800,
           height: 2560,

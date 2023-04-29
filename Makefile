@@ -27,11 +27,14 @@ dependencies: upgrade
 codegen: get
 	@dart run build_runner build --delete-conflicting-outputs
 
-docker-build:
-	@docker build . -t plugfox/medium:0.0.1
+docker-build-x86:
+	@docker build --platform=linux/amd64 -t plugfox/medium:0.0.2 -f x86.dockerfile .
+
+docker-build-arm:
+	@docker build --platform linux/arm64 -t plugfox/medium:0.0.2 -f arm.dockerfile .
 
 docker-run:
-	@docker run -it --rm -w /app -v $(PWD)/data:/app/data -p 8080:8080 plugfox/medium:0.0.1
+	@docker run -it --rm -w /app -v $(PWD)/data:/app/data -p 8080:8080 plugfox/medium:0.0.2
 
 docker-deploy:
-	@docker push plugfox/medium:0.0.1
+	@docker push plugfox/medium:0.0.2
