@@ -119,6 +119,7 @@ Future<Response> _harvestHandler(Request request) async {
                 blog: e.blog,
                 android: e.android,
                 ios: e.ios,
+                created: updated,
                 updated: updated,
               ),
             )

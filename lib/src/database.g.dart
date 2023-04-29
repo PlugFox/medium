@@ -520,6 +520,8 @@ class Article extends Table with TableInfo<Article, ArticleData> {
   }
 
   @override
+  bool get isStrict => true;
+  @override
   bool get dontWriteConstraints => true;
 }
 
