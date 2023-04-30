@@ -1,7 +1,7 @@
-version: 2
-enable-beta-ecosystems: true
-updates:
-  - package-ecosystem: "pub"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+#version: 2
+#enable-beta-ecosystems: true
+#updates:
+#  - package-ecosystem: "pub"
+#    directory: "/"
+#    schedule:
+#      interval: "monthly"
